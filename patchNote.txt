@@ -1,1 +1,2 @@
 v0.00.1 = Lancement
+v0.00.2 = mise en ligne
