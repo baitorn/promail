@@ -1,3 +1,0 @@
-v0.00.1 = Lancement
-v0.00.2 = mise en ligne
-v0.00.3 = *hotfix* lien dans readME.md
