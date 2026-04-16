@@ -1,4 +1,4 @@
-// DOM Elements
+// DOM
 const createEmailButton = document.getElementById('create-email-button');
 const loginButton = document.getElementById('login-button');
 const emailFormContainer = document.getElementById('email-form-container');
@@ -16,42 +16,31 @@ const messageInput = document.getElementById('message-input');
 const sendButton = document.getElementById('send-button');
 const clearButton = document.getElementById('clear-button');
 
-// State
+// STATE
 let currentUser = null;
 let users = [];
-let userMemory = {};
+let swReg = null;
+
+// SERVICE WORKER
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('service-worker.js')
+    .then(reg => swReg = reg);
+}
+
+// NOTIF PERMISSION
+function enableNotifications(){
+  if ("Notification" in window) {
+    Notification.requestPermission();
+  }
+}
 
 // LOAD
 window.addEventListener('load', () => {
   const savedUsers = JSON.parse(localStorage.getItem('users')) || [];
-  const savedMessages = JSON.parse(localStorage.getItem('messages')) || {};
-
   users.push(...savedUsers);
-  userMemory = JSON.parse(localStorage.getItem('memory')) || {};
-
-  if(currentUser){
-    const messages = savedMessages[currentUser.email] || [];
-    messages.forEach(msg => addMessage(msg.text, msg.className, msg.avatar, msg.timestamp));
-  }
 });
 
-// UI
-createEmailButton.addEventListener('click', () => {
-  emailFormContainer.classList.remove('hidden');
-});
-
-loginButton.addEventListener('click', () => {
-  loginFormContainer.classList.remove('hidden');
-});
-
-backButton.addEventListener('click', () => {
-  emailFormContainer.classList.add('hidden');
-});
-
-backLoginButton.addEventListener('click', () => {
-  loginFormContainer.classList.add('hidden');
-});
-
+// CREATE ACCOUNT
 emailForm.addEventListener('submit', (e) => {
   e.preventDefault();
 
@@ -67,6 +56,7 @@ emailForm.addEventListener('submit', (e) => {
   alert("Compte créé !");
 });
 
+// LOGIN
 loginForm.addEventListener('submit', (e) => {
   e.preventDefault();
 
@@ -82,16 +72,25 @@ loginForm.addEventListener('submit', (e) => {
     userInfo.classList.remove('hidden');
     chatSection.classList.remove('hidden');
 
-    const savedMessages = JSON.parse(localStorage.getItem('messages')) || {};
-    (savedMessages[currentUser.email] || []).forEach(msg =>
-      addMessage(msg.text, msg.className, msg.avatar, msg.timestamp)
-    );
+    enableNotifications(); // 🔔 activation notif
   }
 });
 
-// CHAT
+// SEND MESSAGE
 sendButton.addEventListener('click', sendMessage);
-messageInput.addEventListener('keypress', e => { if(e.key === 'Enter') sendMessage(); });
+messageInput.addEventListener('keypress', e => {
+  if(e.key === 'Enter') sendMessage();
+});
+
+function sendPush(title, body){
+  if(swReg?.active){
+    swReg.active.postMessage({
+      type: "NOTIFICATION",
+      title,
+      body
+    });
+  }
+}
 
 function sendMessage(){
   const text = messageInput.value.trim();
@@ -102,11 +101,9 @@ function sendMessage(){
   addMessage(text, 'user-message', currentUser.avatar, time);
   messageInput.value = '';
 
-  save(text, 'user-message', currentUser.avatar, time);
-
   setTimeout(() => {
-    const prenom = currentUser.prenom;
 
+    const prenom = currentUser.prenom;
     let botText = "";
 
     const t = text.toLowerCase();
@@ -114,33 +111,21 @@ function sendMessage(){
     if(t.includes("bonjour")) botText = `Bonjour ${prenom} 👋`;
     else if(t.includes("ça va")) botText = `Oui ${prenom} 😄 et toi ?`;
     else if(t.includes("merci")) botText = `Avec plaisir ${prenom} 😊`;
-    else if(t.includes("qui")) botText = `Je suis ton assistant ${prenom} 🤖`;
-    else if(t.includes("film")) botText = `Tu aimes les films ${prenom} 🎬 ?`;
-    else if(t.includes("jeu")) botText = `Les jeux c’est cool 🎮 !`;
-    else if(t.includes("musique")) botText = `La musique 🎵 c’est génial !`;
+    else if(t.includes("qui")) botText = `Je suis ton assistant 🤖`;
     else botText = `Je comprends ${prenom} 🤔`;
 
     const botTime = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 
     addMessage(botText, 'bot-message', 'https://i.pravatar.cc/40?u=bot', botTime);
 
-    save(botText, 'bot-message', 'https://i.pravatar.cc/40?u=bot', botTime);
+    // 🔔 PUSH NOTIFICATION (WHATSAPP STYLE)
+    sendPush("Nouveau message 💬", botText);
 
   }, 800);
 }
 
-// SAVE
-function save(text, className, avatar, timestamp){
-  const all = JSON.parse(localStorage.getItem('messages')) || {};
-  if(!all[currentUser.email]) all[currentUser.email] = [];
-
-  all[currentUser.email].push({text, className, avatar, timestamp});
-
-  localStorage.setItem('messages', JSON.stringify(all));
-}
-
-// DISPLAY
-function addMessage(text, className, avatar, timestamp){
+// ADD MESSAGE
+function addMessage(text, className, avatar, time){
   const div = document.createElement('div');
   div.classList.add('message', className);
 
@@ -151,13 +136,13 @@ function addMessage(text, className, avatar, timestamp){
   const span = document.createElement('span');
   span.textContent = text;
 
-  const time = document.createElement('span');
-  time.textContent = timestamp;
-  time.classList.add('message-timestamp');
+  const ts = document.createElement('span');
+  ts.textContent = time;
+  ts.classList.add('message-timestamp');
 
   div.appendChild(img);
   div.appendChild(span);
-  div.appendChild(time);
+  div.appendChild(ts);
 
   messagesContainer.appendChild(div);
   messagesContainer.scrollTop = messagesContainer.scrollHeight;
