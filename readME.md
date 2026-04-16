@@ -6,7 +6,7 @@ https://baitorn.github.io/promail/
 Ce projet est un site web simple développé en HTML et CSS.
 Il a été conçu pour présenter un contenu clair, moderne et accessible.
 
-## 🚀 Fonctionnalités
+## 🚀 :smaile: Fonctionnalités
 
 * Structure en HTML
 * Design avec CSS
