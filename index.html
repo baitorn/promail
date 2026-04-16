@@ -7,64 +7,82 @@
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
 </head>
+
 <body>
-  <div class="app-container">
-    <header>
-      <h1>Mon Espace Mail & Chat</h1>
-      <div id="user-info" class="hidden">
-        <p>Connecté en tant que : <span id="user-email"></span> <span class="checkmark">✓</span></p>
-        <button id="logout-button">Déconnexion</button>
-      </div>
-    </header>
 
-    <main>
-      <!-- Boutons pour créer une adresse mail ou se connecter -->
-      <div id="auth-buttons">
-        <button id="create-email-button" class="primary">Créer une adresse mail</button>
-        <button id="login-button" class="secondary">Connexion</button>
-      </div>
+<div class="app-container">
+  <header>
+    <h1>chatmail</h1>
 
-      <!-- Formulaire de création d'email -->
-      <div id="email-form-container" class="form-container hidden">
-        <h2>Créer votre adresse mail</h2>
-        <form id="email-form">
-          <input type="text" id="nom" placeholder="Nom" required>
-          <input type="text" id="prenom" placeholder="Prénom" required>
-          <input type="email" id="email" placeholder="exemple@domaine.com" required>
-          <input type="password" id="password" placeholder="Mot de passe (min. 6 caractères)" minlength="6" required>
-          <input type="text" id="avatar" placeholder="URL de votre avatar (optionnel)">
-          <div class="form-buttons">
-            <button type="button" id="back-button" class="secondary">Retour</button>
-            <button type="submit" class="primary">Valider</button>
-          </div>
-        </form>
-      </div>
+    <div id="user-info" class="hidden">
+      <p>Connecté en tant que : <span id="user-email"></span> <span class="checkmark">✓</span></p>
+      <button id="logout-button">Déconnexion</button>
+    </div>
+  </header>
 
-      <!-- Formulaire de connexion -->
-      <div id="login-form-container" class="form-container hidden">
-        <h2>Connexion</h2>
-        <form id="login-form">
-          <input type="email" id="login-email" placeholder="Votre email" required>
-          <input type="password" id="login-password" placeholder="Votre mot de passe" required>
-          <div class="form-buttons">
-            <button type="button" id="back-login-button" class="secondary">Retour</button>
-            <button type="submit" class="primary">Se connecter</button>
-          </div>
-        </form>
-      </div>
+  <main>
 
-      <!-- Section Chat -->
-      <section class="chat-section hidden" id="chat-section">
-        <h2>Mon Chat Perso</h2>
-        <div id="messages"></div>
-        <div class="message-input-container">
-          <input type="text" id="message-input" placeholder="Écrivez un message...">
-          <button id="send-button">Envoyer</button>
-          <button id="clear-button" class="secondary">Effacer tout</button>
+    <div id="auth-buttons">
+      <button id="create-email-button" class="primary">Créer une adresse mail</button>
+      <button id="login-button" class="secondary">Connexion</button>
+    </div>
+
+    <!-- CREATE -->
+    <div id="email-form-container" class="form-container hidden">
+      <h2>Créer votre adresse mail</h2>
+
+      <form id="email-form">
+        <input type="text" id="nom" placeholder="Nom" required>
+        <input type="text" id="prenom" placeholder="Prénom" required>
+        <input type="email" id="email" placeholder="exemple@domaine.com" required>
+        <input type="password" id="password" placeholder="Mot de passe" minlength="6" required>
+        <input type="text" id="avatar" placeholder="URL avatar (optionnel)">
+
+        <div class="form-buttons">
+          <button type="button" id="back-button" class="secondary">Retour</button>
+          <button type="submit" class="primary">Valider</button>
         </div>
-      </section>
-    </main>
-  </div>
-  <script src="script.js"></script>
+      </form>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="login-form-container" class="form-container hidden">
+      <h2>Connexion</h2>
+
+      <form id="login-form">
+        <input type="email" id="login-email" placeholder="Email" required>
+        <input type="password" id="login-password" placeholder="Mot de passe" required>
+
+        <div class="form-buttons">
+          <button type="button" id="back-login-button" class="secondary">Retour</button>
+          <button type="submit" class="primary">Se connecter</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- CHAT -->
+    <section class="chat-section hidden" id="chat-section">
+      <h2>Mon Chat Perso</h2>
+
+      <div id="messages"></div>
+
+      <div class="message-input-container">
+        <input type="text" id="message-input" placeholder="Écrivez un message...">
+        <button id="send-button">Envoyer</button>
+        <button id="clear-button" class="secondary">Effacer tout</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+      <footer>  
+
+        
+      
+
+        </footer>
+
+<script src="script.js"></script>
 </body>
 </html>

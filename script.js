@@ -1,3 +1,5 @@
+document.addEventListener("DOMContentLoaded", () => {
+
 // DOM
 const createEmailButton = document.getElementById('create-email-button');
 const loginButton = document.getElementById('login-button');
@@ -27,14 +29,14 @@ if ('serviceWorker' in navigator) {
     .then(reg => swReg = reg);
 }
 
-// NOTIF PERMISSION
+// NOTIF
 function enableNotifications(){
   if ("Notification" in window) {
     Notification.requestPermission();
   }
 }
 
-// LOAD
+// LOAD USERS
 window.addEventListener('load', () => {
   const savedUsers = JSON.parse(localStorage.getItem('users')) || [];
   users.push(...savedUsers);
@@ -54,6 +56,9 @@ emailForm.addEventListener('submit', (e) => {
   localStorage.setItem('users', JSON.stringify(users));
 
   alert("Compte créé !");
+
+  emailFormContainer.classList.add("hidden");
+  document.getElementById("auth-buttons").classList.remove("hidden");
 });
 
 // LOGIN
@@ -72,25 +77,61 @@ loginForm.addEventListener('submit', (e) => {
     userInfo.classList.remove('hidden');
     chatSection.classList.remove('hidden');
 
-    enableNotifications(); // 🔔 activation notif
+    document.getElementById("auth-buttons").classList.add("hidden");
+    loginFormContainer.classList.add("hidden");
+
+    enableNotifications();
+  } else {
+    alert("Identifiants incorrects");
   }
+});
+
+// LOGOUT
+logoutButton.addEventListener("click", () => {
+  currentUser = null;
+
+  userInfo.classList.add("hidden");
+  chatSection.classList.add("hidden");
+
+  document.getElementById("auth-buttons").classList.remove("hidden");
+
+  messagesContainer.innerHTML = "";
+});
+
+// BACK BUTTONS
+createEmailButton.addEventListener("click", () => {
+  emailFormContainer.classList.remove("hidden");
+  loginFormContainer.classList.add("hidden");
+  document.getElementById("auth-buttons").classList.add("hidden");
+});
+
+loginButton.addEventListener("click", () => {
+  loginFormContainer.classList.remove("hidden");
+  emailFormContainer.classList.add("hidden");
+  document.getElementById("auth-buttons").classList.add("hidden");
+});
+
+backButton.addEventListener("click", () => {
+  emailFormContainer.classList.add("hidden");
+  document.getElementById("auth-buttons").classList.remove("hidden");
+});
+
+backLoginButton.addEventListener("click", () => {
+  loginFormContainer.classList.add("hidden");
+  document.getElementById("auth-buttons").classList.remove("hidden");
+});
+
+// CLEAR CHAT
+clearButton.addEventListener("click", () => {
+  messagesContainer.innerHTML = "";
 });
 
 // SEND MESSAGE
 sendButton.addEventListener('click', sendMessage);
+
 messageInput.addEventListener('keypress', e => {
   if(e.key === 'Enter') sendMessage();
 });
-
-function sendPush(title, body){
-  if(swReg?.active){
-    swReg.active.postMessage({
-      type: "NOTIFICATION",
-      title,
-      body
-    });
-  }
-}
 
 function sendMessage(){
   const text = messageInput.value.trim();
@@ -104,9 +145,9 @@ function sendMessage(){
   setTimeout(() => {
 
     const prenom = currentUser.prenom;
-    let botText = "";
-
     const t = text.toLowerCase();
+
+    let botText = "";
 
     if(t.includes("bonjour")) botText = `Bonjour ${prenom} 👋`;
     else if(t.includes("ça va")) botText = `Oui ${prenom} 😄 et toi ?`;
@@ -117,9 +158,6 @@ function sendMessage(){
     const botTime = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 
     addMessage(botText, 'bot-message', 'https://i.pravatar.cc/40?u=bot', botTime);
-
-    // 🔔 PUSH NOTIFICATION (WHATSAPP STYLE)
-    sendPush("Nouveau message 💬", botText);
 
   }, 800);
 }
@@ -147,3 +185,5 @@ function addMessage(text, className, avatar, time){
   messagesContainer.appendChild(div);
   messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
+
+});
