@@ -1,13 +1,3 @@
-window.addEventListener('load', () => {
-  const savedUsers = JSON.parse(localStorage.getItem('users')) || [];
-  const savedMessages = JSON.parse(localStorage.getItem('messages')) || {};
-  users.push(...savedUsers);
-  if(currentUser){
-    const messages = savedMessages[currentUser.email] || [];
-    messages.forEach(msg => addMessage(msg.text, msg.className, msg.avatar, msg.timestamp));
-  }
-});
-
 // DOM Elements
 const createEmailButton = document.getElementById('create-email-button');
 const loginButton = document.getElementById('login-button');
@@ -28,33 +18,43 @@ const clearButton = document.getElementById('clear-button');
 
 // State
 let currentUser = null;
-let users = []; // Tableau pour stocker les utilisateurs
+let users = [];
+let userMemory = {};
 
-// Event Listeners
+// LOAD
+window.addEventListener('load', () => {
+  const savedUsers = JSON.parse(localStorage.getItem('users')) || [];
+  const savedMessages = JSON.parse(localStorage.getItem('messages')) || {};
+
+  users.push(...savedUsers);
+  userMemory = JSON.parse(localStorage.getItem('memory')) || {};
+
+  if(currentUser){
+    const messages = savedMessages[currentUser.email] || [];
+    messages.forEach(msg => addMessage(msg.text, msg.className, msg.avatar, msg.timestamp));
+  }
+});
+
+// UI
 createEmailButton.addEventListener('click', () => {
   emailFormContainer.classList.remove('hidden');
-  loginFormContainer.classList.add('hidden');
-  createEmailButton.classList.add('hidden');
-  loginButton.classList.add('hidden');
 });
+
 loginButton.addEventListener('click', () => {
   loginFormContainer.classList.remove('hidden');
-  emailFormContainer.classList.add('hidden');
-  createEmailButton.classList.add('hidden');
-  loginButton.classList.add('hidden');
 });
+
 backButton.addEventListener('click', () => {
   emailFormContainer.classList.add('hidden');
-  createEmailButton.classList.remove('hidden');
-  loginButton.classList.remove('hidden');
 });
+
 backLoginButton.addEventListener('click', () => {
   loginFormContainer.classList.add('hidden');
-  createEmailButton.classList.remove('hidden');
-  loginButton.classList.remove('hidden');
 });
+
 emailForm.addEventListener('submit', (e) => {
   e.preventDefault();
+
   const nom = document.getElementById('nom').value;
   const prenom = document.getElementById('prenom').value;
   const email = document.getElementById('email').value;
@@ -63,98 +63,101 @@ emailForm.addEventListener('submit', (e) => {
 
   users.push({ nom, prenom, email, password, avatar });
   localStorage.setItem('users', JSON.stringify(users));
-  alert(`Compte créé avec succès pour ${email} ! Vous pouvez maintenant vous connecter.`);
-  emailForm.reset();
-  emailFormContainer.classList.add('hidden');
-  createEmailButton.classList.remove('hidden');
-  loginButton.classList.remove('hidden');
+
+  alert("Compte créé !");
 });
+
 loginForm.addEventListener('submit', (e) => {
   e.preventDefault();
+
   const email = document.getElementById('login-email').value;
   const password = document.getElementById('login-password').value;
 
   const user = users.find(u => u.email === email && u.password === password);
+
   if(user){
     currentUser = user;
+
     userEmailSpan.textContent = user.email;
     userInfo.classList.remove('hidden');
-    loginFormContainer.classList.add('hidden');
     chatSection.classList.remove('hidden');
 
     const savedMessages = JSON.parse(localStorage.getItem('messages')) || {};
-    (savedMessages[currentUser.email] || []).forEach(msg => addMessage(msg.text, msg.className, msg.avatar, msg.timestamp));
-
-    alert(`Bonjour ${user.prenom} ! Vous êtes maintenant connecté.`);
-  } else {
-    alert("Email ou mot de passe incorrect.");
+    (savedMessages[currentUser.email] || []).forEach(msg =>
+      addMessage(msg.text, msg.className, msg.avatar, msg.timestamp)
+    );
   }
 });
-logoutButton.addEventListener('click', () => {
-  currentUser = null;
-  userInfo.classList.add('hidden');
-  chatSection.classList.add('hidden');
-  createEmailButton.classList.remove('hidden');
-  loginButton.classList.remove('hidden');
-  messagesContainer.innerHTML = '';
-});
+
+// CHAT
 sendButton.addEventListener('click', sendMessage);
 messageInput.addEventListener('keypress', e => { if(e.key === 'Enter') sendMessage(); });
-clearButton.addEventListener('click', () => {
-  messagesContainer.innerHTML = '';
-  if(currentUser){
-    const allMessages = JSON.parse(localStorage.getItem('messages')) || {};
-    allMessages[currentUser.email] = [];
-    localStorage.setItem('messages', JSON.stringify(allMessages));
-  }
-});
 
-// Functions
 function sendMessage(){
   const text = messageInput.value.trim();
-  if(text === '') return;
-  const timestamp = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-  addMessage(text, 'user-message', currentUser.avatar, timestamp);
+  if(!text || !currentUser) return;
+
+  const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
+  addMessage(text, 'user-message', currentUser.avatar, time);
   messageInput.value = '';
 
-  // Sauvegarder
-  const allMessages = JSON.parse(localStorage.getItem('messages')) || {};
-  if(!allMessages[currentUser.email]) allMessages[currentUser.email] = [];
-  allMessages[currentUser.email].push({text, className:'user-message', avatar: currentUser.avatar, timestamp});
-  localStorage.setItem('messages', JSON.stringify(allMessages));
+  save(text, 'user-message', currentUser.avatar, time);
 
-  // Réponse bot
   setTimeout(() => {
-    const botText = "Bonjour ! Je vous conseille d'utiliser ce site pour créer une adresse mail.";
-    const botTimestamp = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    addMessage(botText, 'bot-message', 'https://i.pravatar.cc/40?u=bot', botTimestamp);
+    const prenom = currentUser.prenom;
 
-    if(currentUser){
-      const allMessages = JSON.parse(localStorage.getItem('messages')) || {};
-      if(!allMessages[currentUser.email]) allMessages[currentUser.email] = [];
-      allMessages[currentUser.email].push({text: botText, className:'bot-message', avatar:'https://i.pravatar.cc/40?u=bot', timestamp:botTimestamp});
-      localStorage.setItem('messages', JSON.stringify(allMessages));
-    }
-  }, 1000);
+    let botText = "";
+
+    const t = text.toLowerCase();
+
+    if(t.includes("bonjour")) botText = `Bonjour ${prenom} 👋`;
+    else if(t.includes("ça va")) botText = `Oui ${prenom} 😄 et toi ?`;
+    else if(t.includes("merci")) botText = `Avec plaisir ${prenom} 😊`;
+    else if(t.includes("qui")) botText = `Je suis ton assistant ${prenom} 🤖`;
+    else if(t.includes("film")) botText = `Tu aimes les films ${prenom} 🎬 ?`;
+    else if(t.includes("jeu")) botText = `Les jeux c’est cool 🎮 !`;
+    else if(t.includes("musique")) botText = `La musique 🎵 c’est génial !`;
+    else botText = `Je comprends ${prenom} 🤔`;
+
+    const botTime = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
+    addMessage(botText, 'bot-message', 'https://i.pravatar.cc/40?u=bot', botTime);
+
+    save(botText, 'bot-message', 'https://i.pravatar.cc/40?u=bot', botTime);
+
+  }, 800);
 }
 
+// SAVE
+function save(text, className, avatar, timestamp){
+  const all = JSON.parse(localStorage.getItem('messages')) || {};
+  if(!all[currentUser.email]) all[currentUser.email] = [];
+
+  all[currentUser.email].push({text, className, avatar, timestamp});
+
+  localStorage.setItem('messages', JSON.stringify(all));
+}
+
+// DISPLAY
 function addMessage(text, className, avatar, timestamp){
   const div = document.createElement('div');
   div.classList.add('message', className);
 
   const img = document.createElement('img');
-  img.src = avatar || 'https://i.pravatar.cc/40';
+  img.src = avatar;
   img.classList.add('message-avatar');
+
+  const span = document.createElement('span');
+  span.textContent = text;
+
+  const time = document.createElement('span');
+  time.textContent = timestamp;
+  time.classList.add('message-timestamp');
+
   div.appendChild(img);
-
-  const spanText = document.createElement('span');
-  spanText.textContent = text;
-  div.appendChild(spanText);
-
-  const timeSpan = document.createElement('span');
-  timeSpan.textContent = timestamp;
-  timeSpan.classList.add('message-timestamp');
-  div.appendChild(timeSpan);
+  div.appendChild(span);
+  div.appendChild(time);
 
   messagesContainer.appendChild(div);
   messagesContainer.scrollTop = messagesContainer.scrollHeight;
