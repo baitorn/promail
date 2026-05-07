@@ -1,189 +1,407 @@
-document.addEventListener("DOMContentLoaded", () => {
+/* =========================
+   CHATMAIL - IA APPRENANTE
+   HUMAIN + ROBOT
+========================= */
 
-// DOM
-const createEmailButton = document.getElementById('create-email-button');
-const loginButton = document.getElementById('login-button');
-const emailFormContainer = document.getElementById('email-form-container');
-const loginFormContainer = document.getElementById('login-form-container');
-const emailForm = document.getElementById('email-form');
-const loginForm = document.getElementById('login-form');
-const backButton = document.getElementById('back-button');
-const backLoginButton = document.getElementById('back-login-button');
-const userInfo = document.getElementById('user-info');
-const userEmailSpan = document.getElementById('user-email');
-const logoutButton = document.getElementById('logout-button');
-const chatSection = document.getElementById('chat-section');
-const messagesContainer = document.getElementById('messages');
-const messageInput = document.getElementById('message-input');
-const sendButton = document.getElementById('send-button');
-const clearButton = document.getElementById('clear-button');
+/* =========================
+   VARIABLES
+========================= */
+const authButtons = document.getElementById("auth-buttons");
 
-// STATE
+const createEmailButton = document.getElementById("create-email-button");
+const loginButton = document.getElementById("login-button");
+
+const emailFormContainer = document.getElementById("email-form-container");
+const loginFormContainer = document.getElementById("login-form-container");
+
+const backButton = document.getElementById("back-button");
+const backLoginButton = document.getElementById("back-login-button");
+
+const emailForm = document.getElementById("email-form");
+const loginForm = document.getElementById("login-form");
+
+const userInfo = document.getElementById("user-info");
+const userEmail = document.getElementById("user-email");
+
+const logoutButton = document.getElementById("logout-button");
+
+const chatSection = document.getElementById("chat-section");
+const messages = document.getElementById("messages");
+
+const messageInput = document.getElementById("message-input");
+const sendButton = document.getElementById("send-button");
+const clearButton = document.getElementById("clear-button");
+
+/* =========================
+   UTILISATEURS
+========================= */
+let users =
+  JSON.parse(localStorage.getItem("users")) || [];
+
 let currentUser = null;
-let users = [];
-let swReg = null;
 
-// SERVICE WORKER
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('service-worker.js')
-    .then(reg => swReg = reg);
-}
+/* =========================
+   IA APPRENTISSAGE
+========================= */
+let apprentissage = false;
 
-// NOTIF
-function enableNotifications(){
-  if ("Notification" in window) {
-    Notification.requestPermission();
-  }
-}
+let questionEnCours = "";
 
-// LOAD USERS
-window.addEventListener('load', () => {
-  const savedUsers = JSON.parse(localStorage.getItem('users')) || [];
-  users.push(...savedUsers);
+/* =========================
+   OUVRIR CREATION
+========================= */
+createEmailButton.addEventListener("click", () => {
+
+  authButtons.classList.add("hidden");
+
+  emailFormContainer.classList.remove("hidden");
+
 });
 
-// CREATE ACCOUNT
-emailForm.addEventListener('submit', (e) => {
-  e.preventDefault();
+/* =========================
+   OUVRIR LOGIN
+========================= */
+loginButton.addEventListener("click", () => {
 
-  const nom = document.getElementById('nom').value;
-  const prenom = document.getElementById('prenom').value;
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-  const avatar = document.getElementById('avatar').value || `https://i.pravatar.cc/40?u=${email}`;
+  authButtons.classList.add("hidden");
 
-  users.push({ nom, prenom, email, password, avatar });
-  localStorage.setItem('users', JSON.stringify(users));
+  loginFormContainer.classList.remove("hidden");
 
-  alert("Compte créé !");
+});
+
+/* =========================
+   RETOUR CREATION
+========================= */
+backButton.addEventListener("click", () => {
 
   emailFormContainer.classList.add("hidden");
-  document.getElementById("auth-buttons").classList.remove("hidden");
+
+  authButtons.classList.remove("hidden");
+
 });
 
-// LOGIN
-loginForm.addEventListener('submit', (e) => {
+/* =========================
+   RETOUR LOGIN
+========================= */
+backLoginButton.addEventListener("click", () => {
+
+  loginFormContainer.classList.add("hidden");
+
+  authButtons.classList.remove("hidden");
+
+});
+
+/* =========================
+   CREATION COMPTE
+========================= */
+emailForm.addEventListener("submit", (e) => {
+
   e.preventDefault();
 
-  const email = document.getElementById('login-email').value;
-  const password = document.getElementById('login-password').value;
+  const nom = document.getElementById("nom").value;
+  const prenom = document.getElementById("prenom").value;
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  const avatar = document.getElementById("avatar").value;
 
-  const user = users.find(u => u.email === email && u.password === password);
+  const userExists = users.find(
+    user => user.email === email
+  );
 
-  if(user){
-    currentUser = user;
+  if (userExists) {
 
-    userEmailSpan.textContent = user.email;
-    userInfo.classList.remove('hidden');
-    chatSection.classList.remove('hidden');
+    alert("Cette adresse existe déjà.");
 
-    document.getElementById("auth-buttons").classList.add("hidden");
-    loginFormContainer.classList.add("hidden");
-
-    enableNotifications();
-  } else {
-    alert("Identifiants incorrects");
+    return;
   }
+
+  const newUser = {
+    nom,
+    prenom,
+    email,
+    password,
+    avatar
+  };
+
+  users.push(newUser);
+
+  localStorage.setItem(
+    "users",
+    JSON.stringify(users)
+  );
+
+  alert("Compte créé avec succès !");
+
+  emailForm.reset();
+
+  emailFormContainer.classList.add("hidden");
+
+  authButtons.classList.remove("hidden");
+
 });
 
-// LOGOUT
+/* =========================
+   CONNEXION
+========================= */
+loginForm.addEventListener("submit", (e) => {
+
+  e.preventDefault();
+
+  const email =
+    document.getElementById("login-email").value;
+
+  const password =
+    document.getElementById("login-password").value;
+
+  const user = users.find(
+    user =>
+      user.email === email &&
+      user.password === password
+  );
+
+  if (!user) {
+
+    alert("Email ou mot de passe incorrect.");
+
+    return;
+  }
+
+  currentUser = user;
+
+  userEmail.textContent = user.email;
+
+  loginFormContainer.classList.add("hidden");
+
+  userInfo.classList.remove("hidden");
+
+  chatSection.classList.remove("hidden");
+
+  loginForm.reset();
+
+});
+
+/* =========================
+   DECONNEXION
+========================= */
 logoutButton.addEventListener("click", () => {
+
   currentUser = null;
 
   userInfo.classList.add("hidden");
+
   chatSection.classList.add("hidden");
 
-  document.getElementById("auth-buttons").classList.remove("hidden");
+  authButtons.classList.remove("hidden");
 
-  messagesContainer.innerHTML = "";
 });
 
-// BACK BUTTONS
-createEmailButton.addEventListener("click", () => {
-  emailFormContainer.classList.remove("hidden");
-  loginFormContainer.classList.add("hidden");
-  document.getElementById("auth-buttons").classList.add("hidden");
-});
+/* =========================
+   AJOUTER MESSAGE
+========================= */
+function addMessage(text, sender = "user") {
 
-loginButton.addEventListener("click", () => {
-  loginFormContainer.classList.remove("hidden");
-  emailFormContainer.classList.add("hidden");
-  document.getElementById("auth-buttons").classList.add("hidden");
-});
+  const messageDiv =
+    document.createElement("div");
 
-backButton.addEventListener("click", () => {
-  emailFormContainer.classList.add("hidden");
-  document.getElementById("auth-buttons").classList.remove("hidden");
-});
+  messageDiv.classList.add("message");
 
-backLoginButton.addEventListener("click", () => {
-  loginFormContainer.classList.add("hidden");
-  document.getElementById("auth-buttons").classList.remove("hidden");
-});
+  const avatarDiv =
+    document.createElement("div");
 
-// CLEAR CHAT
-clearButton.addEventListener("click", () => {
-  messagesContainer.innerHTML = "";
-});
+  avatarDiv.classList.add("avatar");
 
-// SEND MESSAGE
-sendButton.addEventListener('click', sendMessage);
+  const messageText =
+    document.createElement("div");
 
-messageInput.addEventListener('keypress', e => {
-  if(e.key === 'Enter') sendMessage();
-});
+  messageText.classList.add("message-text");
 
-function sendMessage(){
-  const text = messageInput.value.trim();
-  if(!text || !currentUser) return;
+  /* couleur robot */
+  if (sender === "bot") {
 
-  const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    avatarDiv.style.backgroundColor = "#57F287";
 
-  addMessage(text, 'user-message', currentUser.avatar, time);
-  messageInput.value = '';
+  }
+
+  messageText.textContent = text;
+
+  messageDiv.appendChild(avatarDiv);
+
+  messageDiv.appendChild(messageText);
+
+  messages.appendChild(messageDiv);
+
+  messages.scrollTop =
+    messages.scrollHeight;
+
+}
+
+/* =========================
+   IA APPRENANTE
+========================= */
+function botResponse(message) {
+
+  const msg = message.toLowerCase();
+
+  /* =========================
+     MEMOIRE IA
+  ========================= */
+
+  let cerveau =
+    JSON.parse(localStorage.getItem("cerveau")) || {};
+
+  /* =========================
+     MODE APPRENTISSAGE
+  ========================= */
+
+  if (apprentissage) {
+
+    cerveau[questionEnCours] = message;
+
+    localStorage.setItem(
+      "cerveau",
+      JSON.stringify(cerveau)
+    );
+
+    apprentissage = false;
+
+    return "Merci 😊 J'ai appris quelque chose grâce à toi.";
+  }
+
+  /* =========================
+     REPONSES DE BASE
+  ========================= */
+
+  if (
+    msg.includes("bonjour") ||
+    msg.includes("salut")
+  ) {
+
+    return "Bonjour 👋";
+  }
+
+  if (
+    msg.includes("ça va")
+  ) {
+
+    return "Oui très bien 😄";
+  }
+
+  if (
+    msg.includes("heure")
+  ) {
+
+    return "Il est : " +
+      new Date().toLocaleTimeString();
+  }
+
+  if (
+    msg.includes("date")
+  ) {
+
+    return "Nous sommes le : " +
+      new Date().toLocaleDateString();
+  }
+
+  if (
+    msg.includes("merci")
+  ) {
+
+    return "Avec plaisir 😊";
+  }
+
+  /* =========================
+     IA APPREND
+  ========================= */
+
+  if (cerveau[msg]) {
+
+    return cerveau[msg];
+  }
+
+  /* =========================
+     SI INCONNU
+  ========================= */
+
+  questionEnCours = msg;
+
+  apprentissage = true;
+
+  return (
+    "Je ne connais pas ce mot: \"" +
+    message +
+    "\" 🤔\n" +
+    "Apprends-moi la bonne réponse pour la retenir."
+  );
+
+}
+
+/* =========================
+   ENVOYER MESSAGE
+========================= */
+function sendMessage() {
+
+  const text =
+    messageInput.value.trim();
+
+  if (text === "") return;
+
+  /* message utilisateur */
+  addMessage(text, "user");
+
+  /* réponse robot */
+  const response =
+    botResponse(text);
 
   setTimeout(() => {
 
-    const prenom = currentUser.prenom;
-    const t = text.toLowerCase();
+    addMessage(response, "bot");
 
-    let botText = "";
+  }, 500);
 
-    if(t.includes("bonjour")) botText = `Bonjour ${prenom} 👋`;
-    else if(t.includes("ça va")) botText = `Oui ${prenom} 😄 et toi ?`;
-    else if(t.includes("merci")) botText = `Avec plaisir ${prenom} 😊`;
-    else if(t.includes("qui")) botText = `Je suis ton assistant 🤖`;
-    else botText = `Je comprends ${prenom} 🤔`;
+  messageInput.value = "";
 
-    const botTime = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-
-    addMessage(botText, 'bot-message', 'https://i.pravatar.cc/40?u=bot', botTime);
-
-  }, 800);
 }
 
-// ADD MESSAGE
-function addMessage(text, className, avatar, time){
-  const div = document.createElement('div');
-  div.classList.add('message', className);
+/* =========================
+   BOUTON ENVOYER
+========================= */
+sendButton.addEventListener(
+  "click",
+  sendMessage
+);
 
-  const img = document.createElement('img');
-  img.src = avatar;
-  img.classList.add('message-avatar');
+/* =========================
+   TOUCHE ENTREE
+========================= */
+messageInput.addEventListener(
+  "keypress",
+  (e) => {
 
-  const span = document.createElement('span');
-  span.textContent = text;
+    if (e.key === "Enter") {
 
-  const ts = document.createElement('span');
-  ts.textContent = time;
-  ts.classList.add('message-timestamp');
+      sendMessage();
 
-  div.appendChild(img);
-  div.appendChild(span);
-  div.appendChild(ts);
+    }
 
-  messagesContainer.appendChild(div);
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
-}
+  }
+);
 
-});
+/* =========================
+   EFFACER CHAT
+========================= */
+clearButton.addEventListener(
+  "click",
+  () => {
+
+    messages.innerHTML = "";
+
+  }
+);
+
+/* =========================
+   VOIR MEMOIRE IA
+========================= */
+console.log(
+  "Cerveau IA :",
+  JSON.parse(localStorage.getItem("cerveau"))
+);
