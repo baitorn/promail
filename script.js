@@ -420,8 +420,7 @@ function botResponse(message) {
 
     "Je mémorise ce message.",
 
-    "Je comprends un peu mieux maintenant.",
-
+    "Je comprends un peu mieux maintenant."
   ];
 
   return reponses[
