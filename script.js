@@ -1,6 +1,5 @@
 /* =========================
-   CHATMAIL - IA APPRENANTE
-   HUMAIN + ROBOT
+   CHATMAIL - IA COMPLETE
 ========================= */
 
 /* =========================
@@ -41,14 +40,7 @@ let users =
 let currentUser = null;
 
 /* =========================
-   IA APPRENTISSAGE
-========================= */
-let apprentissage = false;
-
-let questionEnCours = "";
-
-/* =========================
-   OUVRIR CREATION
+   CREATION COMPTE
 ========================= */
 createEmailButton.addEventListener("click", () => {
 
@@ -59,7 +51,7 @@ createEmailButton.addEventListener("click", () => {
 });
 
 /* =========================
-   OUVRIR LOGIN
+   LOGIN
 ========================= */
 loginButton.addEventListener("click", () => {
 
@@ -70,7 +62,7 @@ loginButton.addEventListener("click", () => {
 });
 
 /* =========================
-   RETOUR CREATION
+   RETOUR
 ========================= */
 backButton.addEventListener("click", () => {
 
@@ -80,9 +72,6 @@ backButton.addEventListener("click", () => {
 
 });
 
-/* =========================
-   RETOUR LOGIN
-========================= */
 backLoginButton.addEventListener("click", () => {
 
   loginFormContainer.classList.add("hidden");
@@ -92,25 +81,33 @@ backLoginButton.addEventListener("click", () => {
 });
 
 /* =========================
-   CREATION COMPTE
+   CREER UTILISATEUR
 ========================= */
 emailForm.addEventListener("submit", (e) => {
 
   e.preventDefault();
 
-  const nom = document.getElementById("nom").value;
-  const prenom = document.getElementById("prenom").value;
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-  const avatar = document.getElementById("avatar").value;
+  const nom =
+    document.getElementById("nom").value;
 
-  const userExists = users.find(
-    user => user.email === email
-  );
+  const prenom =
+    document.getElementById("prenom").value;
+
+  const email =
+    document.getElementById("email").value;
+
+  const password =
+    document.getElementById("password").value;
+
+  const avatar =
+    document.getElementById("avatar").value;
+
+  const userExists =
+    users.find(user => user.email === email);
 
   if (userExists) {
 
-    alert("Cette adresse existe déjà.");
+    alert("Adresse déjà utilisée.");
 
     return;
   }
@@ -130,7 +127,7 @@ emailForm.addEventListener("submit", (e) => {
     JSON.stringify(users)
   );
 
-  alert("Compte créé avec succès !");
+  alert("Compte créé !");
 
   emailForm.reset();
 
@@ -161,7 +158,7 @@ loginForm.addEventListener("submit", (e) => {
 
   if (!user) {
 
-    alert("Email ou mot de passe incorrect.");
+    alert("Connexion impossible.");
 
     return;
   }
@@ -236,11 +233,12 @@ function addMessage(text, sender = "user") {
 }
 
 /* =========================
-   IA APPRENANTE
+   IA COMPLETE
 ========================= */
 function botResponse(message) {
 
-  const msg = message.toLowerCase();
+  const msg =
+    message.toLowerCase().trim();
 
   /* =========================
      MEMOIRE IA
@@ -249,22 +247,78 @@ function botResponse(message) {
   let cerveau =
     JSON.parse(localStorage.getItem("cerveau")) || {};
 
+  let historique =
+    JSON.parse(localStorage.getItem("historique")) || [];
+
+  /* sauvegarde historique */
+  historique.push(msg);
+
+  localStorage.setItem(
+    "historique",
+    JSON.stringify(historique)
+  );
+
   /* =========================
-     MODE APPRENTISSAGE
+     GOOGLE
   ========================= */
 
-  if (apprentissage) {
+  if (
+    msg.startsWith("recherche ")
+  ) {
 
-    cerveau[questionEnCours] = message;
+    const recherche =
+      message.replace("recherche ", "");
 
-    localStorage.setItem(
-      "cerveau",
-      JSON.stringify(cerveau)
+    window.open(
+      "https://www.google.com/search?q=" +
+      encodeURIComponent(recherche),
+      "_blank"
     );
 
-    apprentissage = false;
+    return "Recherche Google : " +
+      recherche + " 🔎";
+  }
 
-    return "Merci 😊 J'ai appris quelque chose grâce à toi.";
+  /* =========================
+     YOUTUBE
+  ========================= */
+
+  if (
+    msg.startsWith("youtube ")
+  ) {
+
+    const recherche =
+      message.replace("youtube ", "");
+
+    window.open(
+      "https://www.youtube.com/results?search_query=" +
+      encodeURIComponent(recherche),
+      "_blank"
+    );
+
+    return "Recherche YouTube : " +
+      recherche + " ▶️";
+  }
+
+  /* =========================
+     WIKIPEDIA
+  ========================= */
+
+  if (
+    msg.startsWith("wiki ")
+  ) {
+
+    const recherche =
+      message.replace("wiki ", "");
+
+    window.open(
+      "https://fr.wikipedia.org/wiki/" +
+      encodeURIComponent(recherche),
+      "_blank"
+    );
+
+    return "Ouverture Wikipédia : " +
+      recherche + " 📚";
   }
 
   /* =========================
@@ -283,7 +337,7 @@ function botResponse(message) {
     msg.includes("ça va")
   ) {
 
-    return "Oui très bien 😄";
+    return "Oui ça va très bien 😄";
   }
 
   if (
@@ -310,7 +364,7 @@ function botResponse(message) {
   }
 
   /* =========================
-     IA APPREND
+     SI LE BOT CONNAIT
   ========================= */
 
   if (cerveau[msg]) {
@@ -319,19 +373,60 @@ function botResponse(message) {
   }
 
   /* =========================
-     SI INCONNU
+     RECHERCHE MOTS PROCHES
   ========================= */
 
-  questionEnCours = msg;
+  for (let question in cerveau) {
 
-  apprentissage = true;
+    if (
+      msg.includes(question) ||
+      question.includes(msg)
+    ) {
 
-  return (
-    "Je ne connais pas ce mot: \"" +
-    message +
-    "\" 🤔\n" +
-    "Apprends-moi la bonne réponse pour la retenir."
-  );
+      return cerveau[question];
+    }
+  }
+
+  /* =========================
+     APPRENTISSAGE AUTO
+  ========================= */
+
+  if (historique.length >= 2) {
+
+    const ancienneQuestion =
+      historique[historique.length - 2];
+
+    cerveau[ancienneQuestion] = message;
+
+    localStorage.setItem(
+      "cerveau",
+      JSON.stringify(cerveau)
+    );
+  }
+
+  /* =========================
+     REPONSES IA
+  ========================= */
+
+  const reponses = [
+
+    "Intéressant 🤔",
+
+    "Je retiens cela 📚",
+
+    "Je continue d'apprendre 😊",
+
+    "Merci pour l'information.",
+
+    "Je mémorise ce message.",
+
+    "Je comprends un peu mieux maintenant.",
+
+  ];
+
+  return reponses[
+    Math.floor(Math.random() * reponses.length)
+  ];
 
 }
 
@@ -345,10 +440,10 @@ function sendMessage() {
 
   if (text === "") return;
 
-  /* message utilisateur */
+  /* utilisateur */
   addMessage(text, "user");
 
-  /* réponse robot */
+  /* bot */
   const response =
     botResponse(text);
 
@@ -399,9 +494,14 @@ clearButton.addEventListener(
 );
 
 /* =========================
-   VOIR MEMOIRE IA
+   DEBUG IA
 ========================= */
 console.log(
   "Cerveau IA :",
   JSON.parse(localStorage.getItem("cerveau"))
+);
+
+console.log(
+  "Historique IA :",
+  JSON.parse(localStorage.getItem("historique"))
 );
